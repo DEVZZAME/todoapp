@@ -13,6 +13,7 @@
     "cowsay": "^1.5.0",
     "ejs": "^3.1.7",
     "express": "^4.18.0",
+    "method-override": "^3.0.0",
     "mongodb": "^4.5.0",
     "nodemon": "^2.0.15"
   }

@@ -5,8 +5,10 @@ const bodyParser = require('body-parser');
 const res = require('express/lib/response');
 app.use(bodyParser.urlencoded({extended : true}));
 const MongoClient = require('mongodb').MongoClient;
+const methodOverride = require('method-override');
+app.use(methodOverride('_method'));
 app.set('view engine', 'ejs');
-
+app.use('/publc', express.static('public'));
 
 
 var db;
@@ -23,21 +25,6 @@ MongoClient.connect('mongodb+srv://admin:qwer1234@cluster0.dsant.mongodb.net/tod
   });
 })
 
-app.get('/pet', function(요청, 응답){
-  응답.send('this is a page for pet.');
-});
-
-app.get('/beauty', function(req, res){
-  res.send('this is a page for beauty.')
-});
-
-app.get('/', function(req, res){
-  res.sendFile(__dirname + '/index.html')
-});
-
-app.get('/write', function(req, res){
-  res.sendFile(__dirname + '/write.html')
-});
 
 app.post('/add', function(req, res){
   res.send('전송완료');
@@ -56,12 +43,25 @@ app.post('/add', function(req, res){
   });
 });
 
+app.get('/', function(req, res){
+  db.collection('post').find().toArray(function(에러, 결과){
+    console.log(결과);
+    res.render('index.ejs', {posts : 결과})
+  });
+});
+
+app.get('/write', function(req, res){
+  db.collection('post').find().toArray(function(에러, 결과){
+    console.log(결과);
+    res.render('write.ejs', {posts : 결과})
+  });
+});
+
 app.get('/list', function(req, res){
   db.collection('post').find().toArray(function(에러, 결과){
     console.log(결과);
     res.render('list.ejs', {posts : 결과})
   });
-  
 });
 
 app.delete('/delete', function(req, res){
@@ -78,5 +78,19 @@ app.get('/detail/:id', function(req, res){
     console.log(결과);
     res.render('detail.ejs', { data : 결과 });
   })
-  
+});
+
+app.get('/edit/:id', function(req, res){
+  db.collection('post').findOne({_id : parseInt(req.params.id)}, function(에러, 결과){
+    console.log(결과);
+    res.render('edit.ejs', { post : 결과 });
+  })
+});
+
+app.put('/edit', function(req, res){
+  db.collection('post').updateOne({ _id : parseInt(req.body.id) },
+  { $set : { 제목 : req.body.title, 날짜 : req.body.date}}, function(에러, 결과){
+    console.log('수정완료');
+    res.redirect('/list');
+  })
 });
