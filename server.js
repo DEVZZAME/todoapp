@@ -9,6 +9,13 @@ const methodOverride = require('method-override');
 app.use(methodOverride('_method'));
 app.set('view engine', 'ejs');
 app.use('/publc', express.static('public'));
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const session = require('express-session');
+app.use(session({ secret : '비밀코드', resave : true, saveUninitialized : false }));
+app.use(passport.initialize());
+app.use(passport.session());
+
 
 
 var db;
@@ -95,13 +102,18 @@ app.put('/edit', function(req, res){
   })
 });
 
-const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
-const session = require('express-session');
+app.get('/signupForm', function(req, res){
+  res.render('signupForm.ejs');
+});
 
-app.use(session({ secret : '비밀코드', resave : true, saveUninitialized : false }));
-app.use(passport.initialize());
-app.use(passport.session());
+app.post('/signup', function(req, res){
+  res.send('전송완료');
+  db.collection('login').insertOne({name : req.body.name, id : req.body.id, pw : req.body.pw}, function(에러, 결과){
+    if(에러) return console.log(에러);
+    console.log(결과);
+  });
+});
+
 
 app.get('/login', function(req, res){
   res.render('login.ejs')
@@ -119,10 +131,9 @@ passport.use(new LocalStrategy({
   session: true,
   passReqToCallback: false,
 }, function (입력한아이디, 입력한비번, done) {
-  //console.log(입력한아이디, 입력한비번);
+
   db.collection('login').findOne({ id: 입력한아이디 }, function (에러, 결과) {
     if (에러) return done(에러)
-
     if (!결과) return done(null, false, { message: '존재하지 않는 아이디 입니다.' })
     if (입력한비번 == 결과.pw) {
       return done(null, 결과)
@@ -154,3 +165,4 @@ function loginCheck(req, res, next){
     res.send('먼저 로그인을 해주십시오.');
   }
 }
+
