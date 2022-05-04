@@ -9,12 +9,8 @@ const methodOverride = require('method-override');
 app.use(methodOverride('_method'));
 app.set('view engine', 'ejs');
 app.use('/publc', express.static('public'));
-const passport = require('passport');
-const LocalStrategy = require('passport-local').Strategy;
-const session = require('express-session');
-app.use(session({ secret: '비밀코드', resave: true, saveUninitialized: false }));
-app.use(passport.initialize());
-app.use(passport.session());
+
+
 require('dotenv').config()
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
@@ -32,7 +28,6 @@ MongoClient.connect(process.env.DB_URL, function (에러, client) {
 
 
 app.post('/add', function (req, res) {
-  res.send('전송완료');
   db.collection('counter').findOne({ name: '게시물갯수' }, (에러, 결과) => {
     console.log(결과.totalPost)
     var 총게시물갯수 = 결과.totalPost;
@@ -44,29 +39,9 @@ app.post('/add', function (req, res) {
         console.log(결과)
       });
     });
-
+    res.redirect('/list');
   });
-});
-
-app.get('/', function (req, res) {
-  db.collection('post').find().toArray(function (에러, 결과) {
-    console.log(결과);
-    res.render('index.ejs', { posts: 결과 })
-  });
-});
-
-app.get('/write', function (req, res) {
-  db.collection('post').find().toArray(function (에러, 결과) {
-    console.log(결과);
-    res.render('write.ejs', { posts: 결과 })
-  });
-});
-
-app.get('/list', function (req, res) {
-  db.collection('post').find().toArray(function (에러, 결과) {
-    console.log(결과);
-    res.render('list.ejs', { posts: 결과 })
-  });
+  
 });
 
 app.delete('/delete', function (req, res) {
@@ -115,15 +90,13 @@ app.post('/signup', function (req, res) {
 });
 
 
-app.get('/login', function (req, res) {
-  res.render('login.ejs')
-});
+const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const session = require('express-session');
 
-app.post('/login', passport.authenticate('local', {
-  failureRedirect: '/fail'
-}), function (req, res) {
-  res.redirect('/list');
-});
+app.use(session({ secret: '비밀코드', resave: true, saveUninitialized: false }));
+app.use(passport.initialize());
+app.use(passport.session());
 
 passport.use(new LocalStrategy({
   usernameField: 'id',
@@ -156,15 +129,52 @@ passport.deserializeUser(function (아이디, done) {
 
 });
 
+app.get('/', function (req, res) {
+  db.collection('post').find().toArray(function (에러, 결과) {
+    console.log(결과);
+    res.render('index.ejs', { posts: 결과 })
+  });
+});
+
+app.get('/write', loginCheck, function (req, res) {
+  db.collection('post').find().toArray(function (에러, 결과) {
+    console.log(결과);
+    res.render('write.ejs', { posts: 결과 })
+  });
+});
+
+app.get('/login', function (req, res) {
+  res.render('login.ejs')
+});
+
+app.post('/login', passport.authenticate('local', {
+  failureRedirect: '/fail'
+}), function (req, res) {
+  res.redirect('/list');
+});
+
+app.get('/logout', function(req, res){
+  req.logOut();
+  res.redirect('/');
+})
+
 app.get('/mypage', loginCheck, function (req, res) {
   res.render('mypage.ejs', { 사용자: req.user })
+});
+
+app.get('/list', loginCheck, function (req, res) {
+  db.collection('post').find().toArray(function (에러, 결과) {
+    // console.log(결과);
+    res.render('list.ejs', { posts: 결과 })
+  })
 });
 
 function loginCheck(req, res, next) {
   if (req.user) {
     next();
   } else {
-    res.send('먼저 로그인을 해주십시오.');
+    // res.send('먼저 로그인을 해주십시오.');
+    res.redirect('/login');
   }
 }
 
