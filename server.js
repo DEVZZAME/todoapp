@@ -31,7 +31,6 @@ app.post('/add', function (req, res) {
   db.collection('counter').findOne({ name: '게시물갯수' }, (에러, 결과) => {
     console.log(결과.totalPost)
     var 총게시물갯수 = 결과.totalPost;
-
     db.collection('post').insertOne({ _id: 총게시물갯수 + 1, 제목: req.body.title, 날짜: req.body.date }, function (에러, 결과) {
       console.log('저장완료');
       db.collection('counter').updateOne({ name: '게시물갯수' }, { $inc: { totalPost: 1 } }, function (에러, 결과) {
@@ -72,7 +71,7 @@ app.put('/edit', function (req, res) {
     { $set: { 제목: req.body.title, 날짜: req.body.date } }, function (에러, 결과) {
       console.log('수정완료');
       res.redirect('/list');
-    })
+    }) 
 });
 
 app.get('/signupForm', function (req, res) {
@@ -80,13 +79,21 @@ app.get('/signupForm', function (req, res) {
 });
 
 app.post('/signup', function (req, res) {
+  db.collection('counter').findOne({ user: '아이디갯수' }, (에러, 결과) => {
+    console.log(결과.totalUser)
+    var 총아이디갯수 = 결과.totalUser;
+  
   bcrypt.hash(req.body.pw, saltRounds, function (err, hash) {
-    db.collection('login').insertOne({ name: req.body.name, id: req.body.id, pw: hash }, function (에러, 결과) {
-      if (에러) return console.log(에러);
-      console.log(결과);
-      res.redirect('/login')
-    });
-  })
+    db.collection('login').insertOne({ _id: 총아이디갯수 + 1, name: req.body.name, id: req.body.id, pw: hash }, function (에러, 결과) {
+        db.collection('counter').updateOne({ user: '아이디갯수' },{ $inc: { totalUser: 1 } }, function(에러, 결과){
+          if(에러) { return console.log(에러)}
+        });
+        console.log(결과)
+        }
+    );
+  });
+});
+res.redirect('/login')
 });
 
 
@@ -166,6 +173,25 @@ app.get('/list', loginCheck, function (req, res) {
   db.collection('post').find().toArray(function (에러, 결과) {
     // console.log(결과);
     res.render('list.ejs', { posts: 결과 })
+  })
+});
+
+app.get('/search', function (req, res) {
+  var 검색조건 = [
+    {
+      $search: {
+        index: 'titleSearch',
+        text: {
+          query: req.query.value,
+          path: '제목'
+        }
+      }
+    },
+    {$sort : {_id : 1}}
+] 
+  db.collection('post').aggregate(검색조건).toArray((에러, 결과)=>{
+    console.log(결과)
+    res.render('search.ejs', {searchs : 결과})
   })
 });
 

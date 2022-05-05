@@ -30,13 +30,13 @@
 
     <div class="container">
       <ul class="list-group">
-        <% for (var i = posts.length-1; i >= 0; i--){ %> <!--내림차순 정렬, 최근에 작성한 글이 가장 위로-->
+        <% for (var i = searchs.length-1; i >= 0; i--){ %> <!--내림차순 정렬, 최근에 작성한 글이 가장 위로-->
         <li class="list-group-item">
-          <p>글번호 : <%= posts[i]._id %></p>
-          <h4><a href="/detail/<%= posts[i]._id %>" class="detail_link">할일 제목 : <%= posts[i].제목 %></a></h4>
-          <p> 할일 마감날짜 : <%= posts[i].날짜 %> </p>
-          <button class="delete btn btn-danger" data-id="<%= posts[i]._id %>">삭제</button>
-          <button class="btn btn-danger" data-id="<%= posts[i]._id %>" onclick="location.href='/edit/<%= posts[i]._id %>';">수정</button>
+          <p>글번호 : <%= searchs[i]._id %></p>
+          <h4><a href="/detail/<%= searchs[i]._id %>" class="detail_link">할일 제목 : <%= searchs[i].제목 %></a></h4>
+          <p> 할일 마감날짜 : <%= searchs[i].날짜 %> </p>
+          <button class="delete btn btn-danger" data-id="<%= searchs[i]._id %>">삭제</button>
+          <button class="btn btn-danger" data-id="<%= searchs[i]._id %>" onclick="location.href='/edit/<%= searchs[i]._id %>';">수정</button>
         </li>
         <% } %>
       </ul>
