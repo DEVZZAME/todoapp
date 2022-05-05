@@ -26,32 +26,6 @@ MongoClient.connect(process.env.DB_URL, function (에러, client) {
   });
 })
 
-
-app.post('/add', function (req, res) {
-  db.collection('counter').findOne({ name: '게시물갯수' }, (에러, 결과) => {
-    console.log(결과.totalPost)
-    var 총게시물갯수 = 결과.totalPost;
-    db.collection('post').insertOne({ _id: 총게시물갯수 + 1, 제목: req.body.title, 날짜: req.body.date }, function (에러, 결과) {
-      console.log('저장완료');
-      db.collection('counter').updateOne({ name: '게시물갯수' }, { $inc: { totalPost: 1 } }, function (에러, 결과) {
-        if (에러) { return console.log(에러) }
-        console.log(결과)
-      });
-    });
-    res.redirect('/list');
-  });
-  
-});
-
-app.delete('/delete', function (req, res) {
-  req.body._id = parseInt(req.body._id)
-  db.collection('post').deleteOne(req.body, function (에러, 결과) {
-    console.log('삭제완료');
-  })
-  res.send('삭제완료');
-  res.status(200).send({ message: '성공' });
-});
-
 app.get('/detail/:id', function (req, res) {
   db.collection('post').findOne({ _id: parseInt(req.params.id) }, function (에러, 결과) {
     console.log(결과);
@@ -73,29 +47,6 @@ app.put('/edit', function (req, res) {
       res.redirect('/list');
     }) 
 });
-
-app.get('/signupForm', function (req, res) {
-  res.render('signupForm.ejs');
-});
-
-app.post('/signup', function (req, res) {
-  db.collection('counter').findOne({ user: '아이디갯수' }, (에러, 결과) => {
-    console.log(결과.totalUser)
-    var 총아이디갯수 = 결과.totalUser;
-  
-  bcrypt.hash(req.body.pw, saltRounds, function (err, hash) {
-    db.collection('login').insertOne({ _id: 총아이디갯수 + 1, name: req.body.name, id: req.body.id, pw: hash }, function (에러, 결과) {
-        db.collection('counter').updateOne({ user: '아이디갯수' },{ $inc: { totalUser: 1 } }, function(에러, 결과){
-          if(에러) { return console.log(에러)}
-        });
-        console.log(결과)
-        }
-    );
-  });
-});
-res.redirect('/login')
-});
-
 
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
@@ -136,11 +87,60 @@ passport.deserializeUser(function (아이디, done) {
 
 });
 
+app.post('/add', function (req, res) {
+  db.collection('counter').findOne({ name: '게시물갯수' }, (에러, 결과) => {
+    console.log(결과.totalPost)
+    var 총게시물갯수 = 결과.totalPost;
+    var 저장할정보 = { _id: 총게시물갯수 + 1, 제목: req.body.title, 날짜: req.body.date, 작성자: req.user._id };
+    db.collection('post').insertOne(저장할정보, function (에러, 결과) {
+      console.log('저장완료');
+      db.collection('counter').updateOne({ name: '게시물갯수' }, { $inc: { totalPost: 1 } }, function (에러, 결과) {
+        if (에러) { return console.log(에러) }
+        console.log(결과)
+      });
+    });
+    res.redirect('/list');
+  });
+  
+});
+
+app.delete('/delete', function (req, res) {
+  req.body._id = parseInt(req.body._id)
+  var 삭제할데이터 = {_id : req.body._id, 작성자 : req.user._id}
+  db.collection('post').deleteOne(삭제할데이터, function (에러, 결과) {
+    console.log('삭제완료');
+    if(에러){console.log(에러)}
+  })
+  res.status(200).send({ message: '성공' });
+});
+
 app.get('/', function (req, res) {
   db.collection('post').find().toArray(function (에러, 결과) {
     console.log(결과);
     res.render('index.ejs', { posts: 결과 })
   });
+});
+
+app.get('/signupForm', function (req, res) {
+  res.render('signupForm.ejs');
+});
+
+app.post('/signup', function (req, res) {
+  db.collection('counter').findOne({ user: '아이디갯수' }, (에러, 결과) => {
+    console.log(결과.totalUser)
+    var 총아이디갯수 = 결과.totalUser;
+  
+  bcrypt.hash(req.body.pw, saltRounds, function (err, hash) {
+    db.collection('login').insertOne({ _id: 총아이디갯수 + 1, name: req.body.name, id: req.body.id, pw: hash }, function (에러, 결과) {
+        db.collection('counter').updateOne({ user: '아이디갯수' },{ $inc: { totalUser: 1 } }, function(에러, 결과){
+          if(에러) { return console.log(에러)}
+        });
+        console.log(결과)
+        }
+    );
+  });
+});
+res.redirect('/login')
 });
 
 app.get('/write', loginCheck, function (req, res) {

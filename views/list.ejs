@@ -52,8 +52,9 @@
           url : '/delete',
           data : { _id : 글번호 }
         }).done(function(결과){
-          // $(location).attr('href', 'http://localhost:8080/list');
+          // $(location).attr('href', '/list');
           console.log('삭제성공');
+          
           지금누른거.parent('li').fadeOut();
         }).fail(function(xhr, textStatus, errorThrown){
           console.log(xhr, textStatus, errorThrown);
